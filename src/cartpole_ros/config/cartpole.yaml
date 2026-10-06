@@ -1,0 +1,28 @@
+# Ortak fiziksel parametreler. YAML'da ondalık yazmak şart (1.0, 1 değil): parametreler double olarak tanımlı.
+/**:
+  ros__parameters:
+    M: 1.0
+    m: 0.1
+    l: 0.5
+    g: 9.81
+    b: 0.1
+    dt: 0.005
+
+cartpole_sim:
+  ros__parameters:
+    initial_angle_deg: 10.0
+    track_limit: 2.4
+    push_force: 15.0
+    push_duration: 0.2
+
+cartpole_controller:
+  ros__parameters:
+    controller_type: "lqr"
+    u_max: 30.0
+    lqr_q_diag: [1.0, 1.0, 10.0, 1.0]
+    lqr_r: 0.1
+    pid_kp: 60.0
+    pid_ki: 0.0
+    pid_kd: 10.0
+    pid_kx: 2.0
+    pid_kv: 4.0
