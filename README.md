@@ -67,10 +67,26 @@ cd src/cartpole_ros && python3 -m pytest -q
 
 ## Sonuçlar
 
-> `results/` altındaki grafikleri kendi çalıştırmandan ekle ve buraya birkaç cümle yaz:
-> LQR ve PID'in açı ve araba konumu davranışı, itme sonrası toparlanma süresi.
+Aynı senaryo iki denetleyiciyle çalıştırıldı: 10° eğimle başlangıç, yaklaşık 5,7. saniyede arabaya 0,2 s'lik 15 N dış itme (`/cartpole/push` servisi). Değerler grafiklerden okundu, yaklaşıktır.
 
 ![LQR kaydı](results/lqr_run.png)
+![PID kaydı](results/pid_run.png)
+
+| | LQR | PID + konum PD |
+|---|---|---|
+| 10°'den ilk toparlanma | ~2,5 s, -3,3° alt aşım | ~3 s, -1,6° alt aşım |
+| İtme sonrası en büyük açı sapması | -14,5° | -12,3° |
+| İtme sonrası ters yöne aşım | +7° | +3,3° |
+| İtme sonrası araba sapması | -0,51 m | -0,58 m |
+| Araba konumunun sıfıra dönmesi (itmeden sonra) | ~6 s, aşımsız | ~11 s, küçük aşımlı |
+| Tepe kuvvet | ~-20 N | ~-20 N |
+
+İki denetleyici de itmeyi bastırıp sistemi sıfıra getirdi, fakat farklı ödünleşim yaptı: PID açıyı daha sıkı tutuyor (daha küçük sapma ve aşım), LQR ise dört durumu tek kazanç vektörüyle birlikte yönettiği için araba konumunu daha hızlı ve aşımsız oturtuyor. PID'in yavaş konum toparlaması, konum kazançlarının açı kazançlarına göre zayıf olmasından kaynaklanıyor olabilir; kazançlar değiştirilerek denenmedi. Eğrilerin şekli ve tepe değerleri, aynı fiziğin bağımsız NumPy simülasyonuyla (cartpole-balance-control) örtüşüyor.
+
+**Sınırlılıklar:** tek koşu, PID kazançları elle ayarlı, LQR ağırlıkları varsayılan değerlerde, sonuçlar "hangisi daha iyi" değil "hangi ödünleşim" olarak okunmalı.
+
+## Tasarım notu: başlatma yarışı
+Düğümler ayrı süreçler olarak başlıyor. Denetleyici `scipy` yükleyip LQR kazancını hesaplarken ve DDS düğümleri birbirine bağlarken simülatör çalışmaya devam ederse, 10° eğimli çubuk yaklaşık 0,65 s'de devrilir (açık çevrim kararsız). İlk çalıştırmada tam olarak bu oldu. Çözüm: `sim_node` ilk `/cartpole/force` mesajı gelene kadar bekliyor (`wait_for_controller: true`). Gerçek donanımda karşılığı, denetleyici hazır olmadan eyleyicinin etkinleştirilmemesidir.
 
 ## Sınırlılıklar
 - Tam durum ölçümü varsayıldı (sensör gürültüsü ve durum kestirimi yok)
