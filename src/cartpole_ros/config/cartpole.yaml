@@ -14,10 +14,10 @@ cartpole_sim:
     track_limit: 2.4
     push_force: 15.0
     push_duration: 0.2
+    wait_for_controller: true
 
 cartpole_controller:
   ros__parameters:
-    controller_type: "lqr"
     u_max: 30.0
     lqr_q_diag: [1.0, 1.0, 10.0, 1.0]
     lqr_r: 0.1

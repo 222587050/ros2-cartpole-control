@@ -26,6 +26,7 @@ class SimNode(Node):
         self.declare_parameter("track_limit", 2.4)
         self.declare_parameter("push_force", 15.0)
         self.declare_parameter("push_duration", 0.2)
+        self.declare_parameter("wait_for_controller", True)
 
         self.p = Params(*(self.get_parameter(n).value for n in ("M", "m", "l", "g", "b")))
         self.dt = float(self.get_parameter("dt").value)
@@ -37,6 +38,7 @@ class SimNode(Node):
         self.force = 0.0        # son alınan kontrol kuvveti (sıfırıncı derece tutucu)
         self.push_left = 0.0    # kalan dış itme süresi (s)
         self.failed = False
+        self.wait = bool(self.get_parameter("wait_for_controller").value)
 
         self.state_pub = self.create_publisher(Float64MultiArray, "/cartpole/state", 10)
         self.create_subscription(Float64, "/cartpole/force", self.on_force, 10)
@@ -52,6 +54,9 @@ class SimNode(Node):
 
     def on_force(self, msg: Float64):
         self.force = float(msg.data)
+        if self.wait:
+            self.wait = False
+            self.get_logger().info("Denetleyici bağlandı, simülasyon başlıyor.")
 
     def on_push(self, request, response):
         self.push_left = self.push_duration
@@ -64,12 +69,13 @@ class SimNode(Node):
         self.force = 0.0
         self.push_left = 0.0
         self.failed = False
+        self.wait = bool(self.get_parameter("wait_for_controller").value)
         response.success = True
         response.message = "Simülasyon sıfırlandı"
         return response
 
     def step(self):
-        if not self.failed:
+        if not self.failed and not self.wait:
             u = self.force
             if self.push_left > 0.0:
                 u += self.push_force
